@@ -7,7 +7,11 @@ that takes the original ``config`` dict from ``config.py`` and returns
 a patched copy suitable for running ok-ww against the *mobile* version
 of Wuthering Waves inside MuMu Player 12.
 
-Three things ``apply_to`` does:
+Four things ``apply_to`` does:
+
+0. **Monkey-patch** ok-script's broken NEMU IPC capture (1.0.130 has a
+   dead-code early-return that breaks every frame).  See
+   :func:`_patch_nemu_ipc_capture`.
 
 1. **Replace** ``config['windows']`` with ``config['adb']``.  ok-script's
    own ADB mode handles emulator discovery, ADB connection, NEMU IPC
@@ -32,7 +36,10 @@ fully -- ``src/``, ``main.py``, ``config.py`` are never touched.
 from __future__ import annotations
 
 import copy
+import logging
 from typing import Any, Dict
+
+logger = logging.getLogger(__name__)
 
 
 # ok-script ADB-mode capture method names.  Order matters -- ok-script
@@ -49,6 +56,54 @@ DEFAULT_CAPTURE_METHODS = ['ipc', 'adb']
 DEFAULT_INTERACTION = 'ADB'
 
 
+def _patch_nemu_ipc_capture() -> None:
+    """Monkey-patch a known bug in ok-script 1.0.130's NEMU IPC capture.
+
+    ``ok/device/capture_methods/nemu_ipc.py`` line 67-73 reads::
+
+        def do_get_frame(self):
+            self.init_nemu()
+            return self.screencap()                       # <-- BUG
+            if self.exit_event.is_set():                  # dead code
+                return None
+            if self.nemu_impl:                            # dead code
+                return self.nemu_impl.screenshot(timeout=0.5)
+
+    ``self.screencap()`` does not exist on the class (or anywhere in
+    the ok package), so every frame attempt raises
+    ``AttributeError`` -> ``CaptureException``.  ok-script's startup
+    self-test catches that, marks the device "not connected", and the
+    GUI never advances past "Starting" when you click a task.
+
+    The post-return code is the *intended* implementation, so we
+    reinstate it via monkey-patching.  Idempotent: tagged with
+    ``__mumu12_patched__`` so re-running ``apply_to`` is a no-op.
+    """
+    try:
+        from ok.device.capture_methods.nemu_ipc import NemuIpcCaptureMethod
+    except Exception as e:  # pragma: no cover -- ok-script not importable
+        logger.warning('cannot import NemuIpcCaptureMethod for patch: %s', e)
+        return
+
+    if getattr(NemuIpcCaptureMethod.do_get_frame, '__mumu12_patched__', False):
+        return  # already patched in this Python process
+
+    def _patched_do_get_frame(self):
+        self.init_nemu()
+        if self.exit_event.is_set():
+            return None
+        if self.nemu_impl:
+            return self.nemu_impl.screenshot(timeout=0.5)
+        return None
+
+    _patched_do_get_frame.__mumu12_patched__ = True
+    NemuIpcCaptureMethod.do_get_frame = _patched_do_get_frame
+    logger.info(
+        'patched NemuIpcCaptureMethod.do_get_frame '
+        '(works around ok-script 1.0.130 dead-code bug)'
+    )
+
+
 def apply_to(original_config: Dict[str, Any]) -> Dict[str, Any]:
     """Return a deep-copied config patched for MuMu 12 mobile mode.
 
@@ -62,6 +117,10 @@ def apply_to(original_config: Dict[str, Any]) -> Dict[str, Any]:
 
     The PC-mode entry point ``main.py`` is unaffected.
     """
+    # 0. Patch ok-script's NEMU IPC bug before any capture method is
+    #    instantiated.  Safe to call repeatedly; idempotent.
+    _patch_nemu_ipc_capture()
+
     config = copy.deepcopy(original_config)
 
     # 1. Drop PC window-attached config; switch to ok-script's ADB mode.
