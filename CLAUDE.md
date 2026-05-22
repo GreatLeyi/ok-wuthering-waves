@@ -192,5 +192,45 @@ git log --oneline upstream/master..HEAD
 | `build.bat` | Self-bootstrapping build (auto-installs Python 3.12 if missing) |
 | `CLAUDE.md` | This file |
 
+## Rule 6: don't use KEYCODE_BACK during calibration / probing
+
+WuWa Mobile interprets Android BACK as "open exit-to-main-menu
+confirmation".  Sending `adb shell input keyevent KEYCODE_BACK`
+multiple times in a row (e.g. as a "close any popup" cleanup after
+each probe tap) walks the player out through:
+
+  in-game → exit-confirmation popup → main-menu → "已与服务器断开
+  连接" disconnect dialog → login screen.
+
+You then have to tap "点击连接" and wait ~60 s to reload before
+calibration can resume.  Don't.  Use targeted taps on visible "X" /
+"close" / "确认" buttons instead, identified from the screenshot.
+
+Also: don't chain rapid `input tap` commands at unverified
+coordinates.  If a tap lands on something unintended (e.g. a logout
+button), you might not realise until two taps later when the screen
+has fully changed.  One tap per Bash call → screenshot → read →
+decide on next action.
+
+## Rule 6: don't use KEYCODE_BACK during calibration / probing
+
+WuWa Mobile interprets Android BACK as "open exit-to-main-menu
+confirmation".  Sending `adb shell input keyevent KEYCODE_BACK`
+multiple times in a row (e.g. as a "close any popup" cleanup after
+each probe tap) walks the player out through:
+
+  in-game → exit-confirmation popup → main-menu → "已与服务器断开
+  连接" disconnect dialog → login screen.
+
+You then have to tap "点击连接" and wait ~60 s to reload before
+calibration can resume.  Don't.  Use targeted taps on visible "X" /
+"close" / "确认" buttons instead, identified from the screenshot.
+
+Also: don't chain rapid `input tap` commands at unverified
+coordinates.  If a tap lands on something unintended (e.g. a logout
+button), you might not realise until two taps later when the screen
+has fully changed.  One tap per Bash call → screenshot → read →
+decide on next action.
+
 If something seems missing, search `ai-doc/` first -- there's a good
 chance the answer is documented there.

@@ -410,3 +410,67 @@ A：能。ADBInteraction.swipe_nemu 直接走 NEMU IPC 的 down/move/up，是真
 - ⬜ 阶段 3 待 key_map 填好后实战
 
 下次接手的 AI / 自己重新开会话时，从"阶段 2 待用户填 key_map" + 当前 task 列表（`TaskList`）继续即可。
+
+---
+
+## 11. 架构选项 B：透过 MuMu 自带键鼠映射（备选）
+
+**当前默认走 Option A（ADB tap）**：PC `send_key('e')` →
+`MobileInputMixin._tap_mapped` → `click_relative(0.719, 0.898)` →
+`ADBInteraction.click` → `adb shell input tap 1380 970`。我们自己维
+护 `key_map.py` 里的坐标。
+
+但 MuMu Player 12 自己有一套**键鼠到触屏映射**（用户截图展示了完整
+mapping：W/A/S/D 摇杆、E 共鸣战技、Q 声骸异能、R 解放、Space 跳跃、
+Shift 闪避、F 交互、T 探索工具、1/2 切换角色、M 地图等）。MuMu 在
+**模拟器宿主层**（Windows 端）拦截 PC 键盘事件，转换成 Android 触屏
+事件下发。
+
+`key_map.py` 里的所有坐标实际就是从这个 overlay 抠出来的。
+
+### 何时切到 Option B
+
+不必默认切。但若出现以下任一：
+
+1. WuWa 反作弊检测 ADB tap pattern 直接断线（**目前未确认**，
+   2026-05-22 一次断线更可能是 KEYCODE_BACK 导致，不是 tap 触发）
+2. ADBInteraction 输入延迟过高、影响连招
+3. 想完全免维护 `key_map.py`
+
+那就值得切到 Option B：
+
+```
+PC code: self.send_key('e')
+  ↓ MRO 拦截
+MobileInputMixin.send_key
+  ↓ （改为）
+PostMessageInteraction.send_key  ← ok-script 已实现，原本服务于 PC 模式
+  ↓
+PostMessage(MuMu_hwnd, WM_KEYDOWN, vk_e, 0)  → MuMu 收到 → MuMu 自己
+                                                 转成 Android 触屏 → 进入游戏
+```
+
+### 实现成本
+
+- 复用 ok-script `PostMessageInteraction` 类（`ok/device/interaction_methods/post_message.py`）
+- 不再需要 `key_map.py`（MuMu 已有 mapping）
+- 不再需要 `MobileInputMixin._tap_mapped`（直接走 PostMessage 的 send_key）
+- 仍然用 NEMU IPC 截图（capture 和 input 解耦）
+- 摇杆问题最棘手：MuMu overlay 里 W/A/S/D 是固定方向的"虚拟摇杆按
+  钮"，按住能持续移动，但**多键组合**（W+A 走左上）依赖 MuMu 是否
+  支持组合 → 实测确认。如果 MuMu 不组合，要么牺牲 8 方向走位、要
+  么混合方案：方向键走 PostMessage，技能键也走 PostMessage，但摇杆
+  另起一个 ADBInteraction.swipe_nemu 通道
+
+### 混合架构（保底）
+
+如果 Option B 全套迁移成本太高，可以**只把战斗技能改 PostMessage**
+（最频繁的输入，最受延迟和检测影响），方向走位继续用 ADB swipe（已
+经实现）。两套通道并存，`MobileInputMixin` 内部按 key 类型分流即
+可。
+
+### 当前决定
+
+继续用 Option A。MuMu 键鼠映射的坐标信息已经被消化进 `key_map.py`，
+等 stage-3 实战遇到具体问题再决定要不要切 Option B。本节作为技术档
+案，下次接手的 AI 不用重新发现这条路。
