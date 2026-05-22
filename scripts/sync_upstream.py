@@ -45,6 +45,15 @@ import sys
 from typing import List, Optional
 
 
+# Make our prints interleave correctly with git subprocess output.
+# Without this, line-buffered git stdout overtakes our buffered prints
+# and the log looks reversed.
+try:
+    sys.stdout.reconfigure(line_buffering=True)
+except AttributeError:
+    pass
+
+
 # Filenames in the fork that "shadow" an upstream filename.  When upstream
 # changes the LHS, we mirror its new content into the RHS, then keep ours
 # on the merge.  Add more pairs here if you ever rename more upstream files.
