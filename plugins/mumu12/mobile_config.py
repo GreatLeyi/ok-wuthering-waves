@@ -30,8 +30,9 @@ KEY_SHOW_DIAGNOSIS = 'Show Diagnosis Overlay'
 # ``python -m plugins.mumu12.probe`` will list installed packages
 # containing 'wuther', 'kuro', or 'mc' so you can confirm.
 DEFAULT_WUWA_PACKAGES = [
-    'com.kurogame.wutheringwaves',           # likely current name
-    'com.kurogame.wutheringwaves.cn',        # CN variant
+    'com.kurogame.mingchao',                 # CN client (verified 2026-05)
+    'com.kurogame.wutheringwaves',           # historical / global guess
+    'com.kurogame.wutheringwaves.cn',        # CN variant guess
     'com.kurogamestudio.wutheringwaves',     # alternate spelling
     'com.kurogame.wutheringwaves.global',    # global / overseas
     'com.kurogame.mc',                       # historical CN beta name

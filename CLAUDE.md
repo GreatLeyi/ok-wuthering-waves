@@ -118,9 +118,47 @@ original `ok-oldking/ok-wuthering-waves`).  **Never push to `upstream`**.
 The sync script only pushes to `origin`; if you write any other
 push-related code, hard-code the remote name to `origin`.
 
----
+## Rule 5: prefer the wuwa_* scripts over inline ADB calls
 
-## Quick reference
+Stage-2 calibration is heavily delegated to the AI: the user opens
+MuMu, the AI launches WuWa, takes screenshots, identifies on-screen
+buttons, fills `key_map.py`, taps to verify, then commits.  To make
+that flow stable across sessions, three reusable scripts live in
+`scripts/`:
+
+| Script | Purpose |
+| --- | --- |
+| `scripts/wuwa_capture.py` | Screenshot to PNG.  Optional `--launch` to start WuWa, `--wait-stable N` to poll until 3 successive frames match (boot/loading detection), `--info` for getprop dump. |
+| `scripts/wuwa_tap.py rel_x rel_y` | Tap relative coords (0..1).  Optional `--capture-after PATH` to take a follow-up screenshot in the same call. |
+| `scripts/wuwa_swipe.py sx sy ex ey [--duration ms]` | Swipe between relative coords; same `--capture-after` option. |
+
+Use these instead of inline `python -c "import adbutils; ..."` blocks
+so the user only has to authorise predictable `python scripts/wuwa_*`
+commands once.  All three share `scripts/_adb_common.py` for ADB
+device discovery (auto-detects MuMu's `127.0.0.1:1638X` serial
+pattern).
+
+**The AI calibration flow looks like:**
+
+```bash
+# Boot WuWa, save first stable screenshot
+python scripts/wuwa_capture.py --launch --wait-stable 90 --out tmp/boot.png
+
+# AI reads tmp/boot.png via Read tool, identifies buttons, then:
+python scripts/wuwa_tap.py 0.93 0.85 --capture-after tmp/after_e.png
+# AI reads tmp/after_e.png, confirms the resonance button highlighted,
+# updates plugins/mumu12/key_map.py.
+
+# Joystick calibration:
+python scripts/wuwa_swipe.py 0.18 0.78 0.18 0.68 --duration 800 \
+    --capture-after tmp/after_swipe.png
+# AI compares before/after to see if character moved, refines JoystickConfig.
+```
+
+When you finish a calibration round: edit `key_map.py`, commit, then
+`python scripts/sync_upstream.py --push` (Rule 2 still applies).
+
+---
 
 ```bash
 # Sync without pushing (default; safe to run anytime)
