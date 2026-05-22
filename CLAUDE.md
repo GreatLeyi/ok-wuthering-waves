@@ -250,10 +250,10 @@ capture:
 
 ### Why this matters
 
-The repo is private now (Rule 0) but might not always be.  PII
-committed today resurfaces in `git log` forever.  Rewriting history
-to remove it is painful and may not propagate to forks / mirrors.
-Treat private data as if every commit will eventually be public.
+The repo is a **public fork** (Rule 0).  Anything that lands in
+`git log` is world-readable forever — rewriting history is painful
+and won't propagate to forks / mirrors.  Treat every commit as
+permanently public.
 
 ### If you discover PII already in the repo
 
@@ -264,13 +264,23 @@ decide whether to:
 - Live with it but rotate the leaked credential — easier
 - Delete the repo and recreate — nuclear
 
-## Rule 0: the repo is private — keep it that way
+## Rule 0: the repo is a public fork — assume every commit is world-readable
 
-`origin` (`https://github.com/GreatLeyi/ok-wuthering-waves`) is set to
-**private**.  Never run `gh repo edit --visibility public` or change
-visibility through the API.  If you need a public artefact (e.g.
-sharing one file), copy that file into a separate public gist / repo
-manually.
+`origin` is the public fork
+`https://github.com/GreatLeyi/ok-wuthering-waves`.  GitHub does not
+allow flipping a fork to private (we tried; the migration path was
+"detach + re-host as a separate private repo", which the user
+decided against).  So:
+
+- Treat every commit as permanently public.  Rule 7 (no PII in
+  tracked files / commit messages / logged stdout) is the **only**
+  defence — there is no "but the repo is private" safety net.
+- Never run `gh repo edit --visibility ...` or otherwise change
+  visibility through the API.  If the user later asks to go private,
+  the path is documented in git history (see archived
+  `ai-doc/session-resume.md` if needed) — **don't** improvise.
+- If you need a public artefact for sharing, this repo already is
+  public; just link to the file.
 
 If something seems missing, search `ai-doc/` first -- there's a good
 chance the answer is documented there.
