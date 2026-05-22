@@ -212,25 +212,65 @@ button), you might not realise until two taps later when the screen
 has fully changed.  One tap per Bash call → screenshot → read →
 decide on next action.
 
-## Rule 6: don't use KEYCODE_BACK during calibration / probing
+## Rule 7: NEVER persist the user's private data
 
-WuWa Mobile interprets Android BACK as "open exit-to-main-menu
-confirmation".  Sending `adb shell input keyevent KEYCODE_BACK`
-multiple times in a row (e.g. as a "close any popup" cleanup after
-each probe tap) walks the player out through:
+This is a **hard, non-negotiable** rule.
 
-  in-game → exit-confirmation popup → main-menu → "已与服务器断开
-  连接" disconnect dialog → login screen.
+The user's MuMu instance contains a logged-in WuWa account.  When you
+take screenshots via `scripts/wuwa_capture.py`, you may accidentally
+capture:
 
-You then have to tap "点击连接" and wait ~60 s to reload before
-calibration can resume.  Don't.  Use targeted taps on visible "X" /
-"close" / "确认" buttons instead, identified from the screenshot.
+- Phone numbers (even partially masked, e.g. `1xx****xxxx`)
+- KURO Games / account login emails / IDs
+- Player nickname, UID, character names mentioning the user's identity
+- Friend list / chat messages
+- Any other personally identifiable information (PII)
 
-Also: don't chain rapid `input tap` commands at unverified
-coordinates.  If a tap lands on something unintended (e.g. a logout
-button), you might not realise until two taps later when the screen
-has fully changed.  One tap per Bash call → screenshot → read →
-decide on next action.
+### What you MUST do
+
+1. **Never `git add` anything from `tmp/`.**  `tmp/` is already in
+   `.gitignore`; keep it that way.  Screenshots are scratch.
+2. **Read screenshots, don't dwell.**  Once you've extracted what you
+   need with the `Read` tool, you're done.  Don't save copies under
+   tracked paths, don't reference them in commit messages.
+3. **State-machine docs describe screens generically.**  Say "login
+   dialog shows last-used account masked"; do NOT cite the digits,
+   even masked.  Treat any visible digit as toxic.
+4. **Crop / redact before any tracked artefact.**  If for some reason
+   a screenshot HAS to be tracked (e.g. UI mockup in `ai-doc/`), crop
+   the dialog area out or solid-fill it.  Never blur — bluring is
+   reversible enough to leak.
+5. **Delete `tmp/` aggressively.**  Between calibration sessions,
+   `rm -rf tmp/`.  Don't accumulate a screenshot history on disk.
+6. **Commit messages don't reference PII.**  "Login dialog shown" is
+   fine; concrete digits or account fragments are not.
+7. **Never log decoded PII to stdout in committed scripts.**  If a
+   probe parses a logged-in account name from `dumpsys`, redact it
+   before printing.
+
+### Why this matters
+
+The repo is private now (Rule 0) but might not always be.  PII
+committed today resurfaces in `git log` forever.  Rewriting history
+to remove it is painful and may not propagate to forks / mirrors.
+Treat private data as if every commit will eventually be public.
+
+### If you discover PII already in the repo
+
+Stop, alert the user, and do NOT push further changes until they
+decide whether to:
+
+- Force-push a history rewrite (`git filter-repo` etc.) — disruptive
+- Live with it but rotate the leaked credential — easier
+- Delete the repo and recreate — nuclear
+
+## Rule 0: the repo is private — keep it that way
+
+`origin` (`https://github.com/GreatLeyi/ok-wuthering-waves`) is set to
+**private**.  Never run `gh repo edit --visibility public` or change
+visibility through the API.  If you need a public artefact (e.g.
+sharing one file), copy that file into a separate public gist / repo
+manually.
 
 If something seems missing, search `ai-doc/` first -- there's a good
 chance the answer is documented there.
