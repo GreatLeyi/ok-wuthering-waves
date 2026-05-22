@@ -27,6 +27,8 @@ CLAUDE.md
 # Fork override: this CLAUDE.md is the fork's AI ground-rules file and
 # MUST be tracked.  Override the line above.
 !/CLAUDE.md
+# AI scratch dir: screenshots, debug dumps from scripts/wuwa_*.
+tmp/
 # C extensions
 ok
 ok/
