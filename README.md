@@ -10,7 +10,7 @@
 
 [ok-ww](https://github.com/ok-oldking/ok-wuthering-waves) 是一个基于图像识别的鸣潮自动化工具，**只支持 PC 端**鸣潮（Windows 客户端）。
 
-我想让它**额外**支持手游版鸣潮在 MuMu 12 模拟器里跑，但**不修改原作者的任何代码**。整个改动以 plugin 形式塞在 [`plugins/mumu12/`](plugins/mumu12/) 里 + 一个 5 行的新入口 [`main_mobile.py`](main_mobile.py)。
+我想让它**额外**支持手游版鸣潮在 MuMu 12 模拟器里跑，但**不修改原作者的任何代码**。整个改动以 plugin 形式塞在 [`plugins/mumu12/`](plugins/mumu12/) 里 + 一个 thin 新入口 [`main_mobile.py`](main_mobile.py)。
 
 > 完整设计文档：[`ai-doc/mobile-port-plan.md`](ai-doc/mobile-port-plan.md)
 > 插件自述：[`plugins/mumu12/README.md`](plugins/mumu12/README.md)

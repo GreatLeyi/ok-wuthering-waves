@@ -10,7 +10,7 @@ AI session should follow these rules, regardless of what the user asks.
 
 `ok-wuthering-waves` upstream is a PC-only Wuthering Waves automation tool.
 This fork adds **MuMu Player 12 mobile-mode support** as a pluggable
-[`plugins/mumu12/`](plugins/mumu12/) package + a 5-line
+[`plugins/mumu12/`](plugins/mumu12/) package + a thin
 [`main_mobile.py`](main_mobile.py) entrypoint.  The upstream code in
 `src/`, `main.py`, `main_debug.py`, `config.py`, `assets/`, `ok_templates/`
 is **never modified**.  Background, design, and decisions live in
@@ -187,7 +187,7 @@ git log --oneline upstream/master..HEAD
 | `README_upstream.md`, `README_upstream_en.md` | Mirror of upstream READMEs; auto-updated by `scripts/sync_upstream.py` |
 | `ai-doc/` | Architecture & decision records.  **Read before non-trivial work.** |
 | `plugins/mumu12/` | All fork code lives here |
-| `main_mobile.py` | Mobile-mode entrypoint (5 lines, swaps in `apply_to(config)`) |
+| `main_mobile.py` | Mobile-mode entrypoint (per-startup log rotate + `apply_to(config)`) |
 | `scripts/sync_upstream.py` | The sync tool you must run before pushing |
 | `build.bat` | Self-bootstrapping build (auto-installs Python 3.12 if missing) |
 | `CLAUDE.md` | This file |
