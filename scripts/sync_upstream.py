@@ -68,10 +68,17 @@ ROOT = repo_root()
 
 def run(args: List[str], *, capture: bool = False, check: bool = True
         ) -> subprocess.CompletedProcess:
-    """Run a git/subprocess command in the repo root."""
+    """Run a git/subprocess command in the repo root.
+
+    Forces UTF-8 decoding regardless of host locale.  Without this,
+    Windows' default GBK codec chokes on Chinese commit messages /
+    file paths in git output (UnicodeDecodeError).
+    """
     return subprocess.run(
         args, cwd=ROOT,
-        capture_output=capture, text=True, check=check,
+        capture_output=capture, text=True,
+        encoding='utf-8', errors='replace',
+        check=check,
     )
 
 
@@ -80,6 +87,7 @@ def show_upstream_file(ref: str, path: str) -> Optional[str]:
     r = subprocess.run(
         ['git', 'show', f'{ref}:{path}'],
         cwd=ROOT, capture_output=True, text=True,
+        encoding='utf-8', errors='replace',
     )
     return r.stdout if r.returncode == 0 else None
 
