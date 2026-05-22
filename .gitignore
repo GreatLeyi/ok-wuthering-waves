@@ -1,4 +1,5 @@
 .venv
+.python/
 onnxocr/
 updates/
 working/
@@ -23,6 +24,9 @@ screenshots/
 thread_dumps.txt
 .claude/
 CLAUDE.md
+# Fork override: this CLAUDE.md is the fork's AI ground-rules file and
+# MUST be tracked.  Override the line above.
+!/CLAUDE.md
 # C extensions
 ok
 ok/
@@ -30,6 +34,7 @@ ok/
 *.pyx
 *.so
 *.bat
+!build.bat
 .vscode/
 **/__pycache__/
 # Distribution / packaging
