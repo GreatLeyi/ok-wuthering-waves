@@ -70,8 +70,16 @@ def _get_adb_device():
 
 
 def _shell(*args) -> str:
-    """Run an ADB shell command via the DeviceManager."""
-    return og.device_manager.shell(*args)
+    """Run an ADB shell command via the DeviceManager.
+
+    Bundles ``args`` into a single ``cmdargs`` list because adbutils
+    2.12 reads ``device.shell(cmdargs, stream=False, ...)`` -- passing
+    multiple positional strings makes ``'size'`` slot in as
+    ``stream=True`` and you get an ``AdbConnection`` back instead of
+    stdout text.
+    """
+    cmd = list(args) if len(args) != 1 else args[0]
+    return og.device_manager.shell(cmd)
 
 
 # =====================================================================
